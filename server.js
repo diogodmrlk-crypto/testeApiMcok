@@ -5,22 +5,17 @@ const { v4: uuid } = require("uuid");
 const path = require("path");
 
 const app = express();
-
-/* ========================= */
-/* CONFIG */
-/* ========================= */
-
 const PORT = process.env.PORT || 3000;
+
+/* ================= CONFIG ================= */
 
 app.use(express.json());
 app.use(cors());
 
-/* Servir arquivos HTML */
-app.use(express.static(__dirname));
+/* Servir arquivos estáticos */
+app.use(express.static(path.join(__dirname)));
 
-/* ========================= */
-/* DATABASE */
-/* ========================= */
+/* ================= DATABASE ================= */
 
 function loadDB(){
  return JSON.parse(fs.readFileSync("./db.json"));
@@ -30,9 +25,7 @@ function saveDB(data){
  fs.writeFileSync("./db.json", JSON.stringify(data,null,2));
 }
 
-/* ========================= */
-/* ROTAS HTML */
-/* ========================= */
+/* ================= ROTAS HTML ================= */
 
 app.get("/", (req,res)=>{
  res.sendFile(path.join(__dirname,"index.html"));
@@ -42,9 +35,7 @@ app.get("/project", (req,res)=>{
  res.sendFile(path.join(__dirname,"project.html"));
 });
 
-/* ========================= */
-/* API PROJETOS */
-/* ========================= */
+/* ================= API PROJETOS ================= */
 
 app.post("/api/project",(req,res)=>{
 
@@ -64,9 +55,7 @@ app.post("/api/project",(req,res)=>{
 
 });
 
-/* ========================= */
-/* API LISTAR KEYS */
-/* ========================= */
+/* ================= API LISTAR KEYS ================= */
 
 app.get("/api/key/:id",(req,res)=>{
 
@@ -79,9 +68,7 @@ app.get("/api/key/:id",(req,res)=>{
 
 });
 
-/* ========================= */
-/* API CRIAR KEY */
-/* ========================= */
+/* ================= API CRIAR KEY ================= */
 
 app.post("/api/key/:id",(req,res)=>{
 
@@ -105,9 +92,7 @@ app.post("/api/key/:id",(req,res)=>{
 
 });
 
-/* ========================= */
-/* API VALIDAR KEY */
-/* ========================= */
+/* ================= API VALIDAR KEY ================= */
 
 app.post("/api/validate/:id",(req,res)=>{
 
@@ -132,9 +117,7 @@ app.post("/api/validate/:id",(req,res)=>{
 
 });
 
-/* ========================= */
-/* START SERVER */
-/* ========================= */
+/* ================= START ================= */
 
 app.listen(PORT,()=>{
  console.log("Servidor rodando na porta " + PORT);
