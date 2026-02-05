@@ -1,59 +1,66 @@
-const urlParams = new URLSearchParams(window.location.search);
-const projectId = urlParams.get("id");
+const params = new URLSearchParams(window.location.search);
+const project = params.get("id");
 
 /* Criar projeto */
-async function createProject(){
 
- const name = document.getElementById("name").value;
+function create(){
 
- const res = await fetch("/api/project",{
+ fetch("/api/project",{
   method:"POST",
-  headers:{ "Content-Type":"application/json" },
-  body: JSON.stringify({name})
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({
+   name:document.getElementById("name").value
+  })
+ })
+ .then(r=>r.json())
+ .then(d=>{
+  location.href = "/project?id="+d.id;
  });
 
- const data = await res.json();
-
- window.location = `project.html?id=${data.id}`;
 }
 
 /* Criar key */
-async function createKey(){
 
- const key = document.getElementById("key").value;
+function createKey(){
 
- await fetch(`/api/key/${projectId}`,{
+ fetch("/api/key/"+project,{
   method:"POST",
-  headers:{ "Content-Type":"application/json" },
-  body: JSON.stringify({key})
- });
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({
+   key:document.getElementById("key").value
+  })
+ })
+ .then(()=>load());
 
- loadKeys();
 }
 
-/* Carregar tabela */
-async function loadKeys(){
+/* Listar keys */
 
- const res = await fetch(`/api/key/${projectId}`);
- const keys = await res.json();
+function load(){
 
- const table = document.getElementById("table");
+ if(!project) return;
 
- table.innerHTML = `
- <tr>
-  <th>Key</th>
-  <th>Usada</th>
- </tr>
- `;
+ fetch("/api/key/"+project)
+ .then(r=>r.json())
+ .then(keys=>{
 
- keys.forEach(k=>{
-  table.innerHTML += `
-   <tr>
-    <td>${k.key}</td>
-    <td>${k.used ? "Sim":"Não"}</td>
-   </tr>
-  `;
+  const list = document.getElementById("list");
+  list.innerHTML="";
+
+  keys.forEach(k=>{
+
+   list.innerHTML += `
+    <tr>
+     <td>${k.key}</td>
+     <td>${k.used ? "Usada" : "Livre"}</td>
+     <td>${k.device || "-"}</td>
+    </tr>
+   `;
+
+  });
+
  });
+
 }
 
-if(projectId) loadKeys();
+load();
