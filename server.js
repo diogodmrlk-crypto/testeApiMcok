@@ -2,22 +2,19 @@ const express = require("express");
 const fs = require("fs");
 const cors = require("cors");
 const { v4: uuid } = require("uuid");
-const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/* ================= CONFIG ================= */
-
 app.use(express.json());
 app.use(cors());
-
-/* Servir arquivos estáticos */
-app.use(express.static(path.join(__dirname)));
 
 /* ================= DATABASE ================= */
 
 function loadDB(){
+ if(!fs.existsSync("./db.json")){
+  fs.writeFileSync("./db.json", JSON.stringify({resources:{}},null,2));
+ }
  return JSON.parse(fs.readFileSync("./db.json"));
 }
 
@@ -25,91 +22,92 @@ function saveDB(data){
  fs.writeFileSync("./db.json", JSON.stringify(data,null,2));
 }
 
-/* ================= ROTAS HTML ================= */
+/* ================= CRIAR RESOURCE ================= */
 
-app.get("/", (req,res)=>{
- res.sendFile(path.join(__dirname,"index.html"));
-});
-
-app.get("/project", (req,res)=>{
- res.sendFile(path.join(__dirname,"project.html"));
-});
-
-/* ================= API PROJETOS ================= */
-
-app.post("/api/project",(req,res)=>{
+app.post("/api/resource/create",(req,res)=>{
 
  const { name } = req.body;
+
  const db = loadDB();
 
- const id = uuid();
+ if(db.resources[name]) return res.json({error:"Já existe"});
 
- db.projects[id] = {
-  name,
+ db.resources[name] = {
   keys:[]
  };
 
  saveDB(db);
 
- res.json({ id });
+ res.json({success:true});
 
 });
 
-/* ================= API LISTAR KEYS ================= */
+/* ================= CRIAR KEY ================= */
 
-app.get("/api/key/:id",(req,res)=>{
+app.post("/api/resource/:name/create",(req,res)=>{
 
- const db = loadDB();
- const project = db.projects[req.params.id];
-
- if(!project) return res.json([]);
-
- res.json(project.keys);
-
-});
-
-/* ================= API CRIAR KEY ================= */
-
-app.post("/api/key/:id",(req,res)=>{
+ const { name } = req.params;
+ const { key, expire } = req.body;
 
  const db = loadDB();
- const project = db.projects[req.params.id];
+ const resource = db.resources[name];
 
- if(!project) return res.json({error:true});
+ if(!resource) return res.json({error:"Resource não existe"});
 
- const key = {
+ if(resource.keys.length >= 5000){
+  return res.json({error:"Limite atingido"});
+ }
+
+ const newKey = {
   id: uuid(),
-  key: req.body.key,
+  key: key || uuid().slice(0,8),
   used:false,
   device:"",
-  createdAt: Date.now()
+  expire: expire || 0,
+  createdAt: Date.now(),
+  activatedAt: 0
  };
 
- project.keys.push(key);
+ resource.keys.push(newKey);
  saveDB(db);
 
- res.json(key);
+ res.json(newKey);
 
 });
 
-/* ================= API VALIDAR KEY ================= */
+/* ================= VALIDAR KEY ================= */
 
-app.post("/api/validate/:id",(req,res)=>{
+app.post("/api/resource/:name/validate",(req,res)=>{
 
+ const { name } = req.params;
  const { key, device } = req.body;
 
  const db = loadDB();
- const project = db.projects[req.params.id];
+ const resource = db.resources[name];
 
- if(!project) return res.json({valid:false});
+ if(!resource) return res.json({valid:false});
 
- const found = project.keys.find(k=>k.key===key);
+ const found = resource.keys.find(k=>k.key === key);
 
  if(!found) return res.json({valid:false});
- if(found.used) return res.json({valid:false});
 
- found.used = true;
- found.device = device || "Unknown";
+ /* Expiração */
+ if(found.expire > 0 && found.activatedAt > 0){
+  const time = (Date.now() - found.activatedAt) / 60000;
+  if(time >= found.expire){
+   return res.json({valid:false, reason:"expired"});
+  }
+ }
+
+ if(!found.used){
+  found.used = true;
+  found.device = device || "Unknown";
+  found.activatedAt = Date.now();
+ }
+
+ if(found.device !== device){
+  return res.json({valid:false, reason:"device mismatch"});
+ }
 
  saveDB(db);
 
@@ -117,8 +115,27 @@ app.post("/api/validate/:id",(req,res)=>{
 
 });
 
+/* ================= LISTAR KEYS ================= */
+
+app.get("/api/resource/:name/list",(req,res)=>{
+
+ const db = loadDB();
+ const resource = db.resources[req.params.name];
+
+ if(!resource) return res.json([]);
+
+ res.json(resource.keys);
+
+});
+
+/* ================= STATUS ================= */
+
+app.get("/", (req,res)=>{
+ res.json({status:"API Online"});
+});
+
 /* ================= START ================= */
 
 app.listen(PORT,()=>{
- console.log("Servidor rodando na porta " + PORT);
+ console.log("API rodando");
 });
