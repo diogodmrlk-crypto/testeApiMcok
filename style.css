@@ -5,8 +5,6 @@ body{
  margin:0;
 }
 
-/* HEADER */
-
 header{
  background:#161b22;
  padding:20px;
@@ -16,13 +14,9 @@ header{
  border-bottom:1px solid #30363d;
 }
 
-/* CONTAINER */
-
 .container{
  padding:30px;
 }
-
-/* CARD */
 
 .card{
  background:#161b22;
@@ -32,8 +26,6 @@ header{
  box-shadow:0 0 15px rgba(0,0,0,0.5);
 }
 
-/* BOTÃO */
-
 button{
  background:#238636;
  border:none;
@@ -42,14 +34,11 @@ button{
  color:white;
  cursor:pointer;
  font-weight:bold;
- transition:0.3s;
 }
 
 button:hover{
  background:#2ea043;
 }
-
-/* INPUT */
 
 input{
  background:#0d1117;
@@ -60,8 +49,6 @@ input{
  width:100%;
  margin-bottom:10px;
 }
-
-/* TABELA */
 
 table{
  width:100%;
@@ -77,12 +64,4 @@ th,td{
 
 th{
  color:#3fb950;
-}
-
-/* MENU 3 PONTOS */
-
-.menu{
- float:right;
- cursor:pointer;
- font-size:22px;
 }
