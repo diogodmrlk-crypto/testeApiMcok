@@ -1,24 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
+<title>Projeto</title>
+
 <link rel="stylesheet" href="style.css">
+
 </head>
 
 <body>
 
+<header>
+ Projeto
+</header>
+
 <div class="container">
+
  <div class="card">
 
-  <h2>Keys</h2>
+  <h2>Criar Key</h2>
 
-  <input id="key" placeholder="Nova Key">
-  <button onclick="createKey()">Criar Key</button>
+  <input id="key" placeholder="Digite a key">
+  <button onclick="createKey()">Criar</button>
 
-  <table id="table"></table>
+  <table>
+   <thead>
+    <tr>
+     <th>Key</th>
+     <th>Status</th>
+     <th>Device</th>
+    </tr>
+   </thead>
+
+   <tbody id="list"></tbody>
+  </table>
 
  </div>
+
 </div>
 
 <script src="script.js"></script>
+
 </body>
 </html>
