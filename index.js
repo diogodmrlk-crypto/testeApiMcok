@@ -1,47 +1,80 @@
-import { v4 as uuid } from "uuid";
+const express = require("express");
+const app = express();
+
+app.use(express.json());
 
 let db = {};
-const MAX_KEYS = 5000;
 
-export default async function handler(req, res) {
+// =================
+// RAIZ (MOSTRA TUDO)
+// =================
+app.get("/", (req, res) => {
+  res.json({
+    status: "online",
+    resources: db
+  });
+});
 
-  res.setHeader("Content-Type", "application/json");
+// =================
+// LISTAR RESOURCE
+// =================
+app.get("/:resource", (req, res) => {
+  const r = req.params.resource;
+  res.json(db[r] || []);
+});
 
-  const url = req.url.split("?")[0];
-  const parts = url.split("/").filter(Boolean);
+// =================
+// CRIAR KEY
+// =================
+app.post("/:resource", (req, res) => {
+  const r = req.params.resource;
 
-  // exemplo:
-  // /meuprojeto/create
-  const resource = parts[0];
-  const action = parts[1];
+  if (!db[r]) db[r] = [];
 
-  if(!resource){
-    return res.end(JSON.stringify({ api:"Keys API Online" }));
+  if (db[r].length >= 5000)
+    return res.status(400).json({ error: "Limite atingido" });
+
+  const key =
+    (req.body.prefix || "KEY") +
+    "-" +
+    Math.random().toString(36).substring(2, 10);
+
+  const obj = {
+    id: Date.now(),
+    key: key,
+    type: req.body.type || "default",
+    used: false,
+    device: null,
+    createdAt: new Date().toISOString()
+  };
+
+  db[r].push(obj);
+
+  res.json(obj);
+});
+
+// =================
+// VALIDAR KEY
+// =================
+app.post("/:resource/validate", (req, res) => {
+  const r = req.params.resource;
+  const { key, device } = req.body;
+
+  if (!db[r]) return res.json({ valid: false });
+
+  const k = db[r].find(x => x.key === key);
+
+  if (!k) return res.json({ valid: false });
+
+  if (!k.used) {
+    k.used = true;
+    k.device = device;
   }
 
-  if(!db[resource]) db[resource] = [];
+  if (k.device !== device)
+    return res.json({ valid: false, reason: "device mismatch" });
 
-  const body = req.body || {};
+  res.json({ valid: true, data: k });
+});
 
-  // ======================
-  // CREATE KEY
-  // ======================
-  if(req.method === "POST" && action === "create"){
-
-    if(db[resource].length >= MAX_KEYS){
-      return res.end(JSON.stringify({ error:"Limite 5000 keys atingido" }));
-    }
-
-    const newKey = {
-      id: uuid(),
-      key: body.key,
-      used: false,
-      device: "",
-      expire: body.expire || 0,
-      type: body.type || "hour",
-      createdAt: Date.now(),
-      activatedAt: 0,
-      expiresAt: 0
-    };
-
-    db[resource].push
+module.exports = app;
