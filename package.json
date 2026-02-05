@@ -1,9 +1,8 @@
 {
- "name":"key-api",
- "main":"server.js",
- "dependencies":{
-  "express":"^4.18.2",
-  "cors":"^2.8.5",
-  "uuid":"^9.0.1"
- }
+  "name": "keys-api",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "uuid": "^9.0.1"
+  }
 }
