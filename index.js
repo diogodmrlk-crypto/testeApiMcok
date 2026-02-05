@@ -3,11 +3,20 @@ const app = express();
 
 app.use(express.json());
 
+// ================= CORS =================
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  next();
+});
+
+app.options("*", (req, res) => res.sendStatus(200));
+
+// ================= DATABASE =================
 let db = {};
 
-// =================
-// RAIZ (MOSTRA TUDO)
-// =================
+// ================= RAIZ =================
 app.get("/", (req, res) => {
   res.json({
     status: "online",
@@ -15,34 +24,36 @@ app.get("/", (req, res) => {
   });
 });
 
-// =================
-// LISTAR RESOURCE
-// =================
+// ================= LISTAR RESOURCE =================
 app.get("/:resource", (req, res) => {
   const r = req.params.resource;
   res.json(db[r] || []);
 });
 
-// =================
-// CRIAR KEY
-// =================
+// ================= CRIAR KEY =================
 app.post("/:resource", (req, res) => {
   const r = req.params.resource;
 
   if (!db[r]) db[r] = [];
 
-  if (db[r].length >= 5000)
-    return res.status(400).json({ error: "Limite atingido" });
+  if (db[r].length >= 5000) {
+    return res.status(400).json({
+      error: "Limite de 5000 keys atingido"
+    });
+  }
+
+  const prefix = req.body.prefix || "KEY";
+  const type = req.body.type || "default";
 
   const key =
-    (req.body.prefix || "KEY") +
+    prefix +
     "-" +
     Math.random().toString(36).substring(2, 10);
 
   const obj = {
     id: Date.now(),
     key: key,
-    type: req.body.type || "default",
+    type: type,
     used: false,
     device: null,
     createdAt: new Date().toISOString()
@@ -53,9 +64,7 @@ app.post("/:resource", (req, res) => {
   res.json(obj);
 });
 
-// =================
-// VALIDAR KEY
-// =================
+// ================= VALIDAR KEY =================
 app.post("/:resource/validate", (req, res) => {
   const r = req.params.resource;
   const { key, device } = req.body;
@@ -66,15 +75,24 @@ app.post("/:resource/validate", (req, res) => {
 
   if (!k) return res.json({ valid: false });
 
+  // Primeira ativação
   if (!k.used) {
     k.used = true;
     k.device = device;
   }
 
-  if (k.device !== device)
-    return res.json({ valid: false, reason: "device mismatch" });
+  // Proteção device
+  if (k.device !== device) {
+    return res.json({
+      valid: false,
+      reason: "device mismatch"
+    });
+  }
 
-  res.json({ valid: true, data: k });
+  res.json({
+    valid: true,
+    data: k
+  });
 });
 
 module.exports = app;
