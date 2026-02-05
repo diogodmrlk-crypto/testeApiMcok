@@ -1,124 +1,60 @@
-const express = require("express");
-const fs = require("fs");
-const cors = require("cors");
-const { v4: uuid } = require("uuid");
-const path = require("path");
+const params = new URLSearchParams(window.location.search);
+const project = params.get("id");
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+function create(){
 
-/* ================= CONFIG ================= */
+ fetch("/api/project",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({
+   name:document.getElementById("name").value
+  })
+ })
+ .then(r=>r.json())
+ .then(d=>{
+  location.href="/project?id="+d.id;
+ });
 
-app.use(express.json());
-app.use(cors());
-
-/* Servir arquivos estáticos */
-app.use(express.static(path.join(__dirname)));
-
-/* ================= DATABASE ================= */
-
-function loadDB(){
- return JSON.parse(fs.readFileSync("./db.json"));
 }
 
-function saveDB(data){
- fs.writeFileSync("./db.json", JSON.stringify(data,null,2));
+function createKey(){
+
+ fetch("/api/key/"+project,{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({
+   key:document.getElementById("key").value
+  })
+ })
+ .then(()=>load());
+
 }
 
-/* ================= ROTAS HTML ================= */
+function load(){
 
-app.get("/", (req,res)=>{
- res.sendFile(path.join(__dirname,"index.html"));
-});
+ if(!project) return;
 
-app.get("/project", (req,res)=>{
- res.sendFile(path.join(__dirname,"project.html"));
-});
+ fetch("/api/key/"+project)
+ .then(r=>r.json())
+ .then(keys=>{
 
-/* ================= API PROJETOS ================= */
+  const list = document.getElementById("list");
+  list.innerHTML="";
 
-app.post("/api/project",(req,res)=>{
+  keys.forEach(k=>{
 
- const { name } = req.body;
- const db = loadDB();
+   list.innerHTML+=`
+    <tr>
+     <td>${k.key}</td>
+     <td>${k.used ? "Usada" : "Livre"}</td>
+     <td>${k.device || "-"}</td>
+    </tr>
+   `;
 
- const id = uuid();
+  });
 
- db.projects[id] = {
-  name,
-  keys:[]
- };
+ });
 
- saveDB(db);
+}
 
- res.json({ id });
-
-});
-
-/* ================= API LISTAR KEYS ================= */
-
-app.get("/api/key/:id",(req,res)=>{
-
- const db = loadDB();
- const project = db.projects[req.params.id];
-
- if(!project) return res.json([]);
-
- res.json(project.keys);
-
-});
-
-/* ================= API CRIAR KEY ================= */
-
-app.post("/api/key/:id",(req,res)=>{
-
- const db = loadDB();
- const project = db.projects[req.params.id];
-
- if(!project) return res.json({error:true});
-
- const key = {
-  id: uuid(),
-  key: req.body.key,
-  used:false,
-  device:"",
-  createdAt: Date.now()
- };
-
- project.keys.push(key);
- saveDB(db);
-
- res.json(key);
-
-});
-
-/* ================= API VALIDAR KEY ================= */
-
-app.post("/api/validate/:id",(req,res)=>{
-
- const { key, device } = req.body;
-
- const db = loadDB();
- const project = db.projects[req.params.id];
-
- if(!project) return res.json({valid:false});
-
- const found = project.keys.find(k=>k.key===key);
-
- if(!found) return res.json({valid:false});
- if(found.used) return res.json({valid:false});
-
- found.used = true;
- found.device = device || "Unknown";
-
- saveDB(db);
-
- res.json({valid:true});
-
-});
-
-/* ================= START ================= */
-
-app.listen(PORT,()=>{
- console.log("Servidor rodando na porta " + PORT);
-});
+load();
