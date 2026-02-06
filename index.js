@@ -7,138 +7,97 @@ app.use(express.json());
 app.use((req,res,next)=>{
 res.setHeader("Access-Control-Allow-Origin","*");
 res.setHeader("Access-Control-Allow-Headers","*");
-res.setHeader("Access-Control-Allow-Methods","GET,POST,DELETE,OPTIONS");
+res.setHeader("Access-Control-Allow-Methods","GET,POST,PUT,DELETE,OPTIONS");
 next();
 });
 
 app.options("*",(req,res)=>res.sendStatus(200));
 
-/* BANCO EM MEMÓRIA */
-let db = {};
 
-/* ROOT */
-app.get("/",(req,res)=>{
-res.json({ status:"online", resources:Object.keys(db) });
+/* BANCO */
+let keys = [];
+
+
+/* LISTAR KEYS */
+app.get("/keys",(req,res)=>{
+res.json(keys);
 });
 
-/* LISTAR RESOURCE */
-app.get("/:resource",(req,res)=>{
-res.json(db[req.params.resource] || []);
-});
 
-/* GERAR KEY */
-app.post("/:resource",(req,res)=>{
+/* CRIAR KEY */
+app.post("/keys",(req,res)=>{
 
-const r = req.params.resource;
+if(!req.body.key){
+return res.status(400).json({error:"Key obrigatória"});
+}
 
-if(!db[r]) db[r] = [];
+const exists = keys.find(k=>k.key === req.body.key);
 
-if(db[r].length >= 5000)
-return res.json({ error:"Limite de 5000 keys atingido" });
+if(exists){
+return res.status(400).json({error:"Key já existe"});
+}
 
-const key =
-(req.body.prefix || "KEY") +
-"-" +
-Math.random().toString(36).substring(2,10).toUpperCase();
-
-const obj = {
+const newKey = {
 id: Date.now(),
-key,
+key: req.body.key, // 🔥 USA A KEY DO HTML
 type: req.body.type || "default",
+username: req.body.username || null,
 used:false,
 revoked:false,
 device:null,
-createdAt:new Date().toISOString()
+createdAt: req.body.createdAt || Date.now()
 };
 
-db[r].push(obj);
+keys.push(newKey);
 
-res.json(obj);
+res.json(newKey);
 });
 
-/* VALIDAR KEY */
-app.post("/:resource/validate",(req,res)=>{
+
+/* VALIDAR */
+app.post("/keys/validate",(req,res)=>{
 
 const { key, device } = req.body;
-const list = db[req.params.resource];
 
-if(!list) return res.json({ valid:false });
-
-const k = list.find(x=>x.key === key);
+const k = keys.find(x=>x.key === key);
 
 if(!k) return res.json({ valid:false });
 
 if(k.revoked) return res.json({ valid:false, reason:"revoked" });
 
-/* PRIMEIRO USO */
 if(!k.used){
 k.used = true;
 k.device = device;
 }
 
-/* DEVICE DIFERENTE */
-if(k.device !== device)
+if(k.device !== device){
 return res.json({ valid:false, reason:"device_mismatch" });
+}
 
 res.json({ valid:true, data:k });
-
 });
 
-/* REVOGAR KEY */
-app.post("/:resource/revoke",(req,res)=>{
 
-const { key } = req.body;
-const list = db[req.params.resource];
+/* REVOGAR */
+app.put("/keys/:key",(req,res)=>{
 
-if(!list) return res.json({ error:"resource inexistente" });
+const k = keys.find(x=>x.key === req.params.key);
 
-const k = list.find(x=>x.key === key);
+if(!k) return res.status(404).json({error:"Key não encontrada"});
 
-if(!k) return res.json({ error:"key inexistente" });
+Object.assign(k, req.body);
 
-k.revoked = true;
-
-res.json({ success:true });
-
+res.json({success:true, key:k});
 });
 
-/* RESETAR DEVICE */
-app.post("/:resource/reset-device",(req,res)=>{
 
-const { key } = req.body;
-const list = db[req.params.resource];
+/* DELETAR */
+app.delete("/keys/:key",(req,res)=>{
 
-if(!list) return res.json({ error:"resource inexistente" });
+keys = keys.filter(k=>k.key !== req.params.key);
 
-const k = list.find(x=>x.key === key);
-
-if(!k) return res.json({ error:"key inexistente" });
-
-k.device = null;
-k.used = false;
-
-res.json({ success:true });
-
+res.json({success:true});
 });
 
-/* DELETAR KEY */
-app.delete("/:resource/:key",(req,res)=>{
-
-const { resource, key } = req.params;
-
-if(!db[resource])
-return res.json({ error:"resource inexistente" });
-
-db[resource] = db[resource].filter(k=>k.key !== key);
-
-res.json({ success:true });
-
-});
-
-/* DELETAR TODAS KEYS */
-app.delete("/:resource",(req,res)=>{
-db[req.params.resource] = [];
-res.json({ success:true });
-});
 
 module.exports = app;
