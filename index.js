@@ -1,6 +1,36 @@
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 const app = express();
 app.use(express.json());
+
+/* ── CONFIGURAÇÃO DE PERSISTÊNCIA ────────────────────────── */
+const DB_FILE = path.join(__dirname, "keys.json");
+
+/** Carrega as chaves do arquivo JSON */
+function loadKeys() {
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const data = fs.readFileSync(DB_FILE, "utf8");
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    console.error("Erro ao carregar keys.json:", err);
+  }
+  return [];
+}
+
+/** Salva as chaves no arquivo JSON */
+function saveKeys(keysArray) {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(keysArray, null, 2), "utf8");
+  } catch (err) {
+    console.error("Erro ao salvar keys.json:", err);
+  }
+}
+
+// Inicializa a variável 'keys' carregando do arquivo
+let keys = loadKeys();
 
 /* ── CORS ────────────────────────────────────────────────── */
 app.use((req, res, next) => {
@@ -10,9 +40,6 @@ app.use((req, res, next) => {
   next();
 });
 app.options("*", (req, res) => res.sendStatus(200));
-
-/* ── BANCO ───────────────────────────────────────────────── */
-let keys = [];
 
 /* ── HELPERS ─────────────────────────────────────────────── */
 
@@ -40,15 +67,18 @@ function isExpired(k) {
   return k.expiresAt > 0 && k.expiresAt < Math.floor(Date.now() / 1000);
 }
 
-/** Roda a cada minuto e marca keys expiradas */
+/** Roda a cada minuto e marca keys expiradas e salva se houver mudanças */
 function autoExpireLoop() {
   const now = Math.floor(Date.now() / 1000);
+  let changed = false;
   keys.forEach(k => {
     if (!k.expired && k.expiresAt > 0 && k.expiresAt < now) {
       k.expired  = true;
       k.revoked  = true; // bloqueia validação automaticamente
+      changed = true;
     }
   });
+  if (changed) saveKeys(keys);
 }
 setInterval(autoExpireLoop, 60 * 1000); // a cada 1 minuto
 
@@ -114,6 +144,7 @@ app.post("/keys", (req, res) => {
   };
 
   keys.push(newKey);
+  saveKeys(keys); // Salva no arquivo JSON
   res.json({ ...newKey, status: buildStatus(newKey) });
 });
 
@@ -131,6 +162,7 @@ app.post("/keys/validate", (req, res) => {
   if (isExpired(k)) {
     k.expired = true;
     k.revoked = true;
+    saveKeys(keys); // Salva a mudança de status
     return res.json({ valid: false, reason: "expired" });
   }
 
@@ -145,6 +177,7 @@ app.post("/keys/validate", (req, res) => {
     if (k.expiresAt === undefined || k.expiresAt === null) {
       k.expiresAt = calcExpiresAt(k.type, k.expire);
     }
+    saveKeys(keys); // Salva a ativação
     return res.json({ valid: true, data: { ...k, status: "active" } });
   }
 
@@ -179,6 +212,7 @@ app.put("/keys/:key", (req, res) => {
   }
 
   Object.assign(k, req.body);
+  saveKeys(keys); // Salva as alterações
   res.json({ success: true, key: { ...k, status: buildStatus(k) } });
 });
 
@@ -187,12 +221,14 @@ app.delete("/keys/:key", (req, res) => {
   const before = keys.length;
   keys = keys.filter(k => k.key !== req.params.key);
   if (keys.length === before) return res.status(404).json({ error: "Key não encontrada" });
+  saveKeys(keys); // Salva a remoção
   res.json({ success: true });
 });
 
 /* DELETE /keys  — limpar todas */
 app.delete("/keys", (req, res) => {
   keys = [];
+  saveKeys(keys); // Limpa o arquivo JSON
   res.json({ success: true, message: "Todas as keys removidas" });
 });
 
