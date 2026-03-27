@@ -1,0 +1,256 @@
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #e2e8f0;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0 0 0.5rem;
+}
+
+.header p {
+  color: #94a3b8;
+  margin: 0;
+}
+
+.card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.card h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin: 0 0 1rem;
+}
+
+.form {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.input {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.6rem 0.9rem;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  border-color: #6366f1;
+}
+
+.input::placeholder {
+  color: #475569;
+}
+
+.btnPrimary {
+  padding: 0.6rem 1.2rem;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.btnPrimary:hover:not(:disabled) { background: #4f46e5; }
+.btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btnSecondary {
+  padding: 0.4rem 0.8rem;
+  background: #334155;
+  color: #e2e8f0;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-right: 0.4rem;
+}
+.btnSecondary:hover { background: #475569; }
+
+.btnDanger {
+  padding: 0.4rem 0.8rem;
+  background: transparent;
+  color: #f87171;
+  border: 1px solid #f87171;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btnDanger:hover:not(:disabled) { background: #f87171; color: #fff; }
+.btnDanger:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btnIcon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0.4rem;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.muted {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.table th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  color: #64748b;
+  border-bottom: 1px solid #334155;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #1e293b;
+  vertical-align: middle;
+}
+
+.table tr:hover td {
+  background: #0f172a;
+}
+
+.keyCode {
+  background: #0f172a;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #a5b4fc;
+  letter-spacing: 0.02em;
+}
+
+.badgeActive {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  background: #166534;
+  color: #4ade80;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badgeInactive {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  background: #3f3f46;
+  color: #a1a1aa;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.alertSuccess {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #052e16;
+  border: 1px solid #166534;
+  border-radius: 8px;
+  color: #4ade80;
+  font-size: 0.9rem;
+}
+
+.alertError {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #450a0a;
+  border: 1px solid #b91c1c;
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 0.9rem;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.modal {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 100%;
+}
+
+.modal h2 {
+  margin: 0 0 1rem;
+  color: #f1f5f9;
+}
+
+.warning {
+  background: #451a03;
+  border: 1px solid #92400e;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: #fde68a;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.fullKey {
+  display: block;
+  background: #0f172a;
+  padding: 1rem;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #a5b4fc;
+  word-break: break-all;
+  margin-bottom: 1.5rem;
+  border: 1px solid #334155;
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
